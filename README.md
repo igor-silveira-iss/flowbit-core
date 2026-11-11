@@ -2,12 +2,6 @@
 
 <p align="center"><i>O próximo passo da ingestão de dados</i></p>
 
-<p align="center">
-  Ferramenta open-source para mover dados de fontes diversas até destinos de forma simples, confiável e extensível.
-</p>
-
----
-
 ## Sumário
 
 - [Sobre o projeto](#sobre-o-projeto)
@@ -15,7 +9,6 @@
 - [Funcionalidades](#funcionalidades)
 - [Primeiros passos](#primeiros-passos)
 - [Uso](#uso)
-- [Roadmap](#roadmap)
 - [Como contribuir](#como-contribuir)
 - [Colaboradores](#colaboradores)
 - [Licença](#licença)
