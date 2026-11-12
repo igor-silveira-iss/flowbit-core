@@ -7,6 +7,8 @@
 - [Sobre o projeto](#sobre-o-projeto)
 - [Conceitos principais](#conceitos-principais)
 - [Funcionalidades](#funcionalidades)
+- [Arquitetura](#arquitetura)
+- [Estrutura do repositório](#estrutura-do-repositório)
 - [Primeiros passos](#primeiros-passos)
 - [Uso](#uso)
 - [Como contribuir](#como-contribuir)
@@ -48,7 +50,51 @@ Escopo planejado:
 - **Controle de schema:** detecção e registro de mudanças nas estruturas dos dados.
 - **Tratamento de falhas:** reexecução segura de syncs, sem duplicar registros.
 - **Observabilidade:** logs e histórico de execuções.
-- **Interfaces:** linha de comando e API.
+- **Interfaces:** aplicação web, linha de comando e API.
+
+---
+
+## Arquitetura
+
+O FlowBit é dividido em duas camadas, dentro de um único repositório (monorepo):
+
+- **Web (Go):** aplicação web com interface, autenticação de usuários, cadastro de fontes, destinos e conexões. É dona do banco de dados da aplicação e do esquema (migrações).
+- **Engine (Python):** API que executa as ações de fato: descoberta de schema, sincronizações, controle de estado e tratamento de falhas. É chamada apenas pela camada Web, não diretamente pelo usuário.
+- **Banco de dados (PostgreSQL):** armazena usuários, configurações, conexões, histórico de execuções e estado incremental. Não é o destino dos dados sincronizados.
+- **Conectores (Python):** pacotes independentes, um por integração, que implementam a comunicação com fontes e destinos.
+
+```
+ Navegador
+    │
+    ▼
+┌─────────┐   API interna   ┌─────────┐
+│   Web   │ ──────────────▶ │ Engine  │ ──▶ Fontes / Destinos
+│  (Go)   │                 │(Python) │     (via conectores)
+└────┬────┘                 └─────────┘
+     │
+     ▼
+┌─────────┐
+│Postgres │  metadados da aplicação
+└─────────┘
+```
+
+> *Este diagrama descreve a arquitetura planejada e será atualizado conforme a implementação avançar.*
+
+---
+
+## Estrutura do repositório
+
+```
+flowbit/
+├── web/           # Aplicação Go (UI, autenticação, configurações)
+├── engine/        # API e workers Python (execução das syncs)
+├── connectors/    # Conectores Python, um pacote por integração
+├── contracts/     # Contrato compartilhado entre Web e Engine (OpenAPI)
+├── docs/          # Arquitetura e decisões técnicas
+├── scripts/       # Bootstrap e utilitários
+├── docker-compose.yml
+└── .env.example
+```
 
 ---
 
@@ -56,15 +102,21 @@ Escopo planejado:
 
 ### Pré-requisitos
 
-- *A definir: linguagem, versão mínima e dependências do projeto.*
+- [Docker](https://docs.docker.com/get-docker/) e Docker Compose
+- Para desenvolvimento local, sem Docker: Go 1.22+ e Python 3.12+
 
 ### Instalação
 
 ```bash
 git clone https://github.com/<usuario>/flowbit.git
 cd flowbit
-# Instruções de instalação e build a definir
+cp .env.example .env      # ou ./scripts/bootstrap, que gera os segredos automaticamente
+docker compose up -d
 ```
+
+Depois de subir os containers, acesse [http://localhost:8080](http://localhost:8080).
+
+> *Os comandos acima serão válidos após a estrutura inicial ser implementada.*
 
 ---
 
@@ -72,15 +124,21 @@ cd flowbit
 
 Contribuições são bem-vindas, de código, documentação, testes e relatos de bug.
 
+Antes de começar, leia o **[CONTRIBUTING.md](CONTRIBUTING.md)**, que descreve o ambiente de desenvolvimento, os padrões de código, o fluxo de Pull Requests e como criar novos conectores.
+
+Resumidamente:
+
 1. Faça um fork do repositório.
 2. Crie uma branch para a sua mudança:
    ```bash
    git checkout -b feature/minha-feature
    ```
-3. Faça commits claros e objetivos.
+3. Faça commits claros e objetivos, seguindo o padrão do projeto.
 4. Envie a branch e abra um Pull Request descrevendo o problema e a solução.
 
 Para mudanças grandes, abra uma *issue* antes para alinharmos a abordagem.
+
+Vulnerabilidades de segurança devem ser reportadas em privado, conforme descrito no CONTRIBUTING.md, e não em issues públicas.
 
 ---
 

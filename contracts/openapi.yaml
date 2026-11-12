@@ -1,0 +1,44 @@
+openapi: 3.1.0
+info:
+  title: FlowBit Engine API
+  version: 0.1.0
+  description: |
+    Contrato interno entre a camada Web (Go) e a Engine (Python).
+    Esta API não é exposta ao usuário final. Mudanças aqui devem ser feitas
+    antes do código que as implementa ou consome.
+
+servers:
+  - url: http://engine:8000
+    description: Rede interna do docker-compose
+
+paths:
+  /health:
+    get:
+      summary: Verifica se a Engine está pronta para receber requisições.
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: Engine operacional.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      description: Token compartilhado entre Web e Engine (FLOWBIT_ENGINE_TOKEN).
+
+security:
+  - serviceToken: []

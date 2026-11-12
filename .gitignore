@@ -1,0 +1,25 @@
+# Segredos locais: nunca versionar
+.env
+
+# Go
+web/bin/
+*.exe
+*.test
+*.out
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Editores e sistema
+.idea/
+.vscode/
+*.swp
+.DS_Store

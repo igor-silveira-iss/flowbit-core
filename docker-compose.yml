@@ -1,0 +1,55 @@
+name: flowbit
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: flowbit
+      POSTGRES_USER: flowbit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - flowbit-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowbit -d flowbit"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  engine:
+    build: ./engine
+    environment:
+      FLOWBIT_ENGINE_TOKEN: ${FLOWBIT_ENGINE_TOKEN:?Defina FLOWBIT_ENGINE_TOKEN no arquivo .env}
+    # Sem "ports": a Engine é acessível apenas pela rede interna do compose.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    environment:
+      ADDR: ":8080"
+      DATABASE_URL: postgres://flowbit:${POSTGRES_PASSWORD}@db:5432/flowbit?sslmode=disable
+      ENGINE_URL: http://engine:8000
+      ENGINE_TOKEN: ${FLOWBIT_ENGINE_TOKEN}
+      FLOWBIT_ENCRYPTION_KEY: ${FLOWBIT_ENCRYPTION_KEY:?Defina FLOWBIT_ENCRYPTION_KEY no arquivo .env}
+    ports:
+      # Publicado somente em localhost, para não expor a aplicação na rede local.
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      engine:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  flowbit-db:
